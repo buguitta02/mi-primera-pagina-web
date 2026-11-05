@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mi goldoooo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#000;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font-family:Arial, sans-serif;
+}
+canvas{
+  display:block;
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+}
+.mensaje{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:#fff8b0;
+  font-size:22px;
+  font-weight:bold;
+  text-align:center;
+  opacity:0;
+  transition:opacity 1.5s ease;
+  z-index:10;
+  text-shadow:0 0 8px #ffdd44, 0 0 16px #ffaa22;
+  white-space:nowrap;
+}
+.corazon-lado{
+  position:absolute;
+  color:#ff4466;
+  font-size:20px;
+  animation:flotar 3s ease-in-out infinite;
+  opacity:0;
+  z-index:5;
+}
+@keyframes flotar{
+  0%{transform:translateY(0px);}
+  50%{transform:translateY(-20px);}
+  100%{transform:translateY(0px);}
+}
+</style>
+</head>
+<body>
+<canvas id="lienzo"></canvas>
+<div class="mensaje" id="texto">te amo mi goldoooo... eres lo mejor de mi vida mi amoll❤️💕😍😍</div>
+
+<script>
+const canvas = document.getElementById("lienzo");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let partículas = [];
+let mostarMensaje = false;
+
+// Puntos para la forma del corazón
+function generarPuntosCorazón(cantidad){
+  let puntos = [];
+  for(let i=0;i<cantidad;i++){
+    let t = (i/cantidad)*Math.PI*2;
+    let x = 16*Math.pow(Math.sin(t),3);
+    let y = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+    puntos.push({x:x*12,y:y*12});
+  }
+  return puntos;
+}
+
+const puntosCorazón = generarPuntosCorazón(160);
+
+class Partícula{
+  constructor(x,y,tipo){
+    this.x = x ?? canvas.width/2 + (Math.random()-0.5)*80;
+    this.y = y ?? canvas.height/2 + (Math.random()-0.5)*80;
+    this.vx = (Math.random()-0.5)*2.2;
+    this.vy = (Math.random()-0.5)*2.2;
+    this.vida = Math.random()*60+120;
+    this.tamaño = Math.random()*3+1.2;
+    this.color = ["#ffdd44","#ffaa22","#ff77aa","#ff4466"][Math.floor(Math.random()*4)];
+
+    if(tipo==="estallido"){
+      this.vx*=3.5;
+      this.vy*=3.5;
+      this.vida*=0.6;
+    }
+  }
+
+  actualizar(){
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vida--;
+    this.vy += 0.015;
+  }
+
+  dibujar(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.tamaño,0,Math.PI*2);
+    ctx.fillStyle=this.color;
+    ctx.globalAlpha=Math.min(1,this.vida/80);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+// Crear corazón de partículas
+puntosCorazón.forEach(p=>{
+  partículas.push(new Partícula(canvas.width/2+p.x, canvas.height/2+p.y, "flotar"));
+});
+
+// Crear más corazones pequeños a los lados
+function crearCorazonesLados(){
+  const cantidad = 18;
+
+  for(let i=0;i<cantidad;i++){
+    const corazon = document.createElement("div");
+    corazon.classList.add("corazon-lado");
+    corazon.textContent = "❤️😍";
+
+    const lado = i < cantidad/2 ? "izquierdo" : "derecho";
+
+    if(lado === "izquierdo"){
+      corazon.style.left = Math.random()*35 + "%";
+    }else{
+      corazon.style.left = 65 + Math.random()*30 + "%";
+    }
+
+    corazon.style.top = Math.random()*80 + "%";
+    corazon.style.animationDelay = Math.random()*2 + "s";
+    corazon.style.fontSize = (16 + Math.random()*20) + "px";
+
+    document.body.appendChild(corazon);
+
+    setTimeout(()=>{
+      corazon.style.transition = "opacity 1s ease";
+      corazon.style.opacity = "0.85";
+    }, 500 + i*100);
+  }
+}
+
+// Al hacer clic estalla y muestra el mensaje
+canvas.addEventListener("click",()=>{
+  for(let i=0;i<180;i++){
+    partículas.push(new Partícula(null,null,"estallido"));
+  }
+
+  mostarMensaje = true;
+  document.getElementById("texto").style.opacity = "1";
+
+  crearCorazonesLados();
+});
+
+function animar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  for(let i=partículas.length-1;i>=0;i--){
+    let p = partículas[i];
+    p.actualizar();
+    p.dibujar();
+
+    if(p.vida<=0){
+      partículas.splice(i,1);
+    }
+  }
+
+  requestAnimationFrame(animar);
+}
+
+animar();
+
+window.addEventListener("resize",()=>{
+  canvas.width=innerWidth;
+  canvas.height=innerHeight;
+});
+</script>
+</body>
+</html>
